@@ -8,6 +8,7 @@ import numpy as np
 from itertools import chain
 import nltk
 from nltk import word_tokenize, pos_tag
+import argparse
 
 
 def get_documents(folder_path: str) -> Dict[str, str]:
@@ -189,11 +190,11 @@ def parse_ground_truth(file_path: str) -> Dict[str, List[str]]:
     return result
 
 
-def prob4():
-    collections = get_documents('smaller_dataset/collections')
+def prob4(dataset_path: str):
+    collections = get_documents(f'{dataset_path}/collections')
     vector_space = VectorSpace(collections)
-    queries = get_documents('smaller_dataset/queries')
-    ground_truth = parse_ground_truth('smaller_dataset/rel.tsv')
+    queries = get_documents(f'{dataset_path}/queries')
+    ground_truth = parse_ground_truth(f'{dataset_path}/rel.tsv')
 
     
     vector_space = VectorSpace(collections)
@@ -244,7 +245,14 @@ def prob4():
 
 
 if __name__ == '__main__':
-    news = get_documents('EnglishNews')
+
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("--Eng_query", type=str, default="EnglishNews")
+    arg_parser.add_argument("--Chi_query", type=str, default="ChineseNews")
+    arg_parser.add_argument("--Smaller_dataset", type=str, default="smaller_dataset")
+    args = arg_parser.parse_args()
+
+    news = get_documents(args.Eng_query)
     vector_space = VectorSpace(news)
     query_vector = vector_space.makeVector("Typhoon Taiwan war", vector_space.idfVector)
     
@@ -279,7 +287,7 @@ if __name__ == '__main__':
         print(f"{doc}: {score:.5f}")
 
     # Chinese News
-    news = get_documents('ChineseNews')
+    news = get_documents(args.Chi_query)
     vector_space = VectorSpace(news, parser=JiebaParser())
     query_vector = vector_space.makeVector("資安 遊戲", vector_space.idfVector)
     
@@ -296,5 +304,5 @@ if __name__ == '__main__':
     print_sperate()
 
     # Prob4
-    prob4()
+    prob4(args.Smaller_dataset)
 
