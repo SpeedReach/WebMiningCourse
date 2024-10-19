@@ -124,12 +124,11 @@ class VectorSpace:
                 vector[self.vectorKeywordIndex[word]] += 1
         return vector
 
-    def pfSearchTfIdfCos(self, doc, top=10) -> Dict[str, float]:
-        queryVector = self.makeVector(doc, self.idfVector)
-        best = self.searchTfIdfCos(queryVector.tf_idf, 1)
+    def pfSearchTfIdfCos(self, queryVector, top=10) -> Dict[str, float]:
+        best = self.searchTfIdfCos(queryVector, 1)
         tokenized_doc = self.tokenized[next(iter(best))]
         fb_vector = self.makeFeedBackVector(tokenized_doc)
-        new_query = queryVector.tf_idf + 0.5 * fb_vector
+        new_query = queryVector + 0.5 * fb_vector
         return self.searchTfIdfCos(new_query, top)
 
     def searchTfIdfCos(self, queryVector, top=10) -> Dict[str, float]:
@@ -140,6 +139,30 @@ class VectorSpace:
         sorted_ratings = dict(sorted(ratings.items(), key=lambda item: item[1], reverse=True))
         return dict(list(sorted_ratings.items())[:top])
 
+    def searchTfCos(self, queryVector, top=10) -> Dict[str, float]:
+        ratings = {
+            doc_name: util.np_cos(queryVector, documentVector.tf)
+            for doc_name, documentVector in self.documentVectors.items()
+        }
+        sorted_ratings = dict(sorted(ratings.items(), key=lambda item: item[1], reverse=True))
+        return dict(list(sorted_ratings.items())[:top])
+    
+    def searchTfIdfEcld(self, queryVector, top=10) -> Dict[str, float]:
+        ratings = {
+            doc_name: util.np_euclidean_distance(queryVector, documentVector.tf_idf)
+            for doc_name, documentVector in self.documentVectors.items()
+        }
+        sorted_ratings = dict(sorted(ratings.items(), key=lambda item: item[1], reverse=False))
+        return dict(list(sorted_ratings.items())[:top])
+    
+    def searchTfEcld(self, queryVector, top=10) -> Dict[str, float]:
+        ratings = {
+            doc_name: util.np_euclidean_distance(queryVector, documentVector.tf)
+            for doc_name, documentVector in self.documentVectors.items()
+        }
+        sorted_ratings = dict(sorted(ratings.items(), key=lambda item: item[1], reverse=False))
+        return dict(list(sorted_ratings.items())[:top])
+    
 
 def print_sperate():
     print("\n" + "="*50 + "\n")
@@ -148,9 +171,10 @@ def print_sperate():
 if __name__ == '__main__':
     news = get_news('EnglishNews/EnglishNews')
     vector_space = VectorSpace(news)
-
-    results = vector_space.pfSearchTfIdfCos("Typhoon Taiwan war")
-    print("TF-IDF Cosine:")
+    query_vector = vector_space.makeVector("Typhoon Taiwan war", vector_space.idfVector)
+    
+    results = vector_space.pfSearchTfIdfCos(query_vector.tf_idf)
+    print("Relevance Feedback:")
     for doc, score in results.items():
         print(f"{doc}: {score:.5f}")
 

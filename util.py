@@ -26,3 +26,5 @@ def np_cos(vector1: np.ndarray, vector2: np.ndarray):
 
 def np_euclidean_distance(a, b):
     return np.linalg.norm(a - b)
+
+
